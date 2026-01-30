@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Light (Cool Blue-Gray palette) */
+  --bg: #F4F4F4;            /* (전체 페이지 배경) cool blue-gray background */
+  --panel: #FFFFFF;         /* (컴포넌트 배경) surface/card */
+  --panel-border: #C8D2DE;  /* (컴포넌트 테두리/구분선선) border */
+
+  --fg: #0F172A;            /* (본문/헤드라인 기본 글자색) high-contrast main text */
+  --fg-muted: #475569;      /* (설명/서브텍스트 글자색) cooler gray muted text */
+
+  --accent-from: #052659;   /* (주요 버튼 색상) navy for primary buttons (keep CTA style) */
+  --accent-via: #0B2F6A;    /* (주요 버튼 그라데이션 중간 색상) */
+  --accent-to:  #B0CBE0;    /* (링크/하이라이트 톤톤)cool blue-gray accent */
+  --accent-hover: #B0CBE0;  /* (Hero Title 색상)accent for links/highlights */
+
+  --ring: rgba(5,38,89,0.35); /* (포커스 아웃라인) */
+  --shadow: 0 10px 30px rgba(12,18,28,0.10); /* (그림자 효과) */
+
+  /* Chat bubbles (message bubbles) */
+  --chat-incoming-bg: #0B1F3A;                 /* assistant bubble background */
+  --chat-incoming-fg: #F4F4F4;                 /* assistant bubble text */
+
+  --chat-outgoing-bg: rgba(255, 255, 255, 0.9);/* user bubble background */
+  --chat-outgoing-fg: #0F172A;                 /* user bubble text */
+  --chat-outgoing-border: rgba(226, 232, 240, 0.8); /* user bubble border */
+
+}
+
+.dark {
+  /* Dark (Charcoal + Ice Blue accent, subtle glow) */
+  --bg: #1C1C1C;            /* charcoal */
+  --panel: rgba(255,255,255,0.06);
+  --panel-border: rgba(214,239,255,0.10);
+
+  --fg: rgba(255,255,255,0.92);
+  --fg-muted: rgba(255,255,255,0.70);
+
+  --accent-from: #D6EFFF;   /* ice blue */
+  --accent-via:  #8FD3FF;
+  --accent-to:   #3B82F6;   /* cool blue */
+  --accent-hover: #8FD3FF;
+
+  --ring: rgba(214,239,255,0.35);
+  --shadow: 0 14px 40px rgba(0,0,0,0.35);
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--fg);
+}
+
+body {
+  background:
+    radial-gradient(900px 500px at 20% 15%, rgba(176,203,224,0.15), transparent 60%),
+    radial-gradient(700px 400px at 80% 20%, rgba(200,210,222,0.10), transparent 55%),
+    var(--bg);
+}
+
+.dark body {
+  background:
+    radial-gradient(900px 500px at 20% 15%, rgba(214,239,255,0.10), transparent 60%),
+    radial-gradient(700px 400px at 80% 20%, rgba(59,130,246,0.10), transparent 55%),
+    var(--bg);
+}
