@@ -2,10 +2,14 @@ export default function PortfolioPanel() {
     return (
       <div>
         {/* Kicker */}
-        <div className="text-xs tracking-[0.22em] uppercase text-[var(--fg-muted)] mb-3 sm:mb-4">Security Engineer</div>
+        <div className="text-xs tracking-[0.22em] uppercase text-[var(--fg-muted)] mb-3 sm:mb-4">
+          Cloud Security Engineer
+        </div>
         
         {/* Hero Title */}
-        <div className="text-4xl sm:text-5xl font-semibold leading-[1.05] text-[var(--fg)]">Hello, my name is</div>
+        <div className="text-4xl sm:text-5xl font-semibold leading-[1.05] text-[var(--fg)]">
+          Hello, my name is
+        </div>
         
         {/* Name */}
         <h1 className="mt-2 text-5xl sm:text-6xl lg:text-7xl font-extrabold leading-[1.0] text-[var(--fg)]">
@@ -14,8 +18,7 @@ export default function PortfolioPanel() {
         
         {/* Subcopy */}
         <p className="mt-5 max-w-xl text-sm sm:text-base leading-relaxed text-[var(--fg-muted)]">
-          Cloud security engineer passionate about building secure and scalable infrastructure.
-          Specializing in AWS security, threat detection, and compliance.
+          I build secure, scalable AWS infrastructure and practical security automation.
         </p>
 
         {/* CTAs */}
@@ -27,7 +30,7 @@ export default function PortfolioPanel() {
             View Projects
           </a>
           <a
-            href="/contact"
+            href="/about#contact"
             className="inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-semibold bg-[var(--panel)] text-[var(--fg)] border border-[var(--panel-border)] hover:bg-black/5 dark:hover:bg-white/10 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
           >
             Contact
@@ -59,7 +62,7 @@ export default function PortfolioPanel() {
             </svg>
           </a>
           <a
-            href="mailto:your.email@example.com"
+            href="mailto:bysumcontact@gmail.com"
             aria-label="Email"
             className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--panel)] text-[var(--fg-muted)] border border-[var(--panel-border)] hover:text-[var(--accent-hover)] hover:bg-black/5 dark:hover:bg-white/10 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
           >

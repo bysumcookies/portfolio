@@ -1,9 +1,23 @@
 "use client";
 
-import { useTheme } from "../ThemeProvider";
+import { useTheme } from "@/app/ThemeProvider";
 
-export default function ModeToggle() {
-  const { isDark, toggleTheme } = useTheme();
+export default function ThemeToggle() {
+  const { isDark, toggleTheme, mounted } = useTheme();
+
+  // hydration mismatch 방지(버튼 깜빡임/문구 뒤집힘 방지)
+  if (!mounted) {
+    return (
+      <button
+        type="button"
+        aria-label="Theme toggle"
+        className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-semibold border border-[var(--panel-border)] bg-[var(--panel)] text-[var(--fg-muted)] opacity-60"
+        disabled
+      >
+        Theme
+      </button>
+    );
+  }
 
   return (
     <button
