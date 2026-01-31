@@ -18,24 +18,11 @@ export default function HeroTitle() {
         ENGINEER
       </div>
 
-      {/* SUB TITLE (Secondary) */}
-      <div
-        className="
-          mt-5 sm:mt-6
-          text-xs sm:text-sm
-          tracking-[0.30em]
-          uppercase
-          font-medium
-          text-[var(--fg-muted)]
-        "
-      >
-        My name is MIN-KYEONG
-      </div>
+      {/* sub-scrib */}
+        <p className="mt-6 max-w-2xl text-sm sm:text-base leading-relaxed text-[var(--fg-muted)]">
+            I build secure, scalable AWS infrastructure and practical security automation.
+        </p>
 
-      {/* Desktop-only description */}
-      <p className="mt-4 hidden md:block max-w-2xl text-sm sm:text-base leading-relaxed text-[var(--fg-muted)]">
-        I build secure, scalable AWS infrastructure and practical security automation.
-      </p>
     </section>
   );
 }

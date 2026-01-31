@@ -16,17 +16,15 @@ export default function ChatClosedPanel({ onOpenChat }) {
       <div className="relative flex h-full flex-col px-7 py-8 sm:px-8 sm:py-9">
         {/* Top 30%: Hero block */}
         <div className="flex-1">
-          <div className="text-[11px] tracking-[0.22em] uppercase text-[var(--fg-muted)]">
-            Cloud Security Engineer
-          </div>
+          
 
-          <div className="mt-3 text-[28px] sm:text-[32px] font-semibold leading-[1.05] text-[var(--fg)]">
+          <div className="mt-2 text-[28px] sm:text-[20px] font-semibold leading-[1.05] text-[var(--fg)]">
             Hello, my name is
           </div>
 
           <div className="mt-2 text-[34px] sm:text-[42px] font-extrabold leading-[1.0] text-[var(--fg)]">
             <span style={{ color: "var(--accent-hover)" }}>
-              MIN-KYEONG KIM
+              MIN-KYEONG
             </span>
           </div>
 
