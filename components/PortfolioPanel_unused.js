@@ -30,7 +30,7 @@ export default function PortfolioPanel() {
             View Projects
           </a>
           <a
-            href="/about#contact"
+            href="/contact"
             className="inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-semibold bg-[var(--panel)] text-[var(--fg)] border border-[var(--panel-border)] hover:bg-black/5 dark:hover:bg-white/10 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
           >
             Contact

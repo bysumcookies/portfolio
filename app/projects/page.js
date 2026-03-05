@@ -1,20 +1,30 @@
 import Link from "next/link";
-import Navbar from "../../components/Navbar";
 
 const items = [
-  { slug: "project-a", title: "Project A", desc: "요약 설명" },
-  { slug: "project-b", title: "Project B", desc: "요약 설명" },
-  { slug: "project-c", title: "Project C", desc: "요약 설명" },
+  {
+    slug: "project-a",
+    title: "Project A",
+    desc: "Short summary and key outcomes.",
+  },
+  {
+    slug: "project-b",
+    title: "Project B",
+    desc: "Short summary and key outcomes.",
+  },
+  {
+    slug: "project-c",
+    title: "Project C",
+    desc: "Short summary and key outcomes.",
+  },
 ];
 
 export default function ProjectsPage() {
   return (
     <div className="flex-1 flex flex-col">
-      <Navbar />
       <main className="flex-1 mx-auto max-w-6xl px-6 py-10">
         <h1 className="text-3xl font-semibold text-[var(--fg)]">Projects</h1>
         <p className="mt-3 text-sm text-[var(--fg-muted)]">
-          목록 페이지(정통 구조). 카드 클릭 → 상세로 이동.
+          Browse project summaries and open each card for details.
         </p>
 
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">

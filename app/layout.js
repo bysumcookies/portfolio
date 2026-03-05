@@ -1,6 +1,7 @@
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { ThemeProvider } from './ThemeProvider'
+import Navbar from '@/components/Navbar'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -36,7 +37,6 @@ export const metadata = {
   },
 }
 
-
 export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
@@ -58,19 +58,16 @@ export default function RootLayout({ children }) {
       </head>
       <body className={`${inter.className} min-h-screen flex flex-col`}>
         <ThemeProvider>
-          <div className="flex-1 flex flex-col">
-            {children}
-          </div>
+          <Navbar />
+          <div className="flex-1 flex flex-col">{children}</div>
           <footer className="border-t border-[var(--panel-border)] bg-[var(--panel)] backdrop-blur-sm">
             <div className="mx-auto w-full max-w-screen-2xl px-4 sm:px-6 lg:px-10">
               <div className="flex flex-col items-center justify-between gap-4 py-4 sm:flex-row">
-                <div className="text-xs text-[var(--fg-muted)]">
-                  © 2026 AltOr Portfolio (Demo)
-                </div>
+                <div className="text-xs text-[var(--fg-muted)]">(c) 2026 AltOr Portfolio (Demo)</div>
                 <div className="flex items-center gap-6 text-xs text-[var(--fg-muted)]">
                   <a
-                  href="/about#contact"
-                  className="transition-colors hover:text-[var(--accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] rounded-sm"
+                    href="/about#contact"
+                    className="transition-colors hover:text-[var(--accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] rounded-sm"
                   >
                     Contact
                   </a>

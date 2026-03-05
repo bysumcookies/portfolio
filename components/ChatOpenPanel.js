@@ -7,7 +7,7 @@ export default function ChatOpenPanel({ onClose }) {
     () => [
       {
         role: "assistant",
-        text: "Pick a prompt below — I’ll guide you to Projects / Certs / Timeline.",
+        text: "Pick a prompt below and I will guide you to Projects / Certs / Timeline.",
       },
     ],
     []
@@ -15,13 +15,10 @@ export default function ChatOpenPanel({ onClose }) {
 
   return (
     <aside className="relative h-full w-full rounded-3xl border border-[var(--panel-border)] bg-[var(--panel)] backdrop-blur-md overflow-hidden flex flex-col">
-      {/* Header (minimal) */}
       <div className="flex items-center justify-between border-b border-[var(--panel-border)] px-6 py-4">
         <div>
           <div className="text-sm font-medium text-[var(--fg)]">Guide</div>
-          <div className="text-[11px] text-[var(--fg-muted)] tracking-wide">
-            Chat UI (API-ready)
-          </div>
+          <div className="text-[11px] text-[var(--fg-muted)] tracking-wide">Chat UI (API-ready)</div>
         </div>
         <button
           onClick={onClose}
@@ -34,7 +31,6 @@ export default function ChatOpenPanel({ onClose }) {
         </button>
       </div>
 
-      {/* Messages area (airy, not “chat app”) */}
       <div className="flex-1 overflow-auto px-6 py-6">
         <div className="space-y-4">
           {messages.map((m, idx) => (
@@ -46,7 +42,6 @@ export default function ChatOpenPanel({ onClose }) {
           ))}
         </div>
 
-        {/* Chips */}
         <div className="mt-6 flex flex-wrap gap-2">
           {["Projects", "Certs", "Timeline", "Contact"].map((t) => (
             <button
@@ -60,13 +55,12 @@ export default function ChatOpenPanel({ onClose }) {
         </div>
       </div>
 
-      {/* Input (kept, but “fake/disabled-ish” style) */}
       <div className="border-t border-[var(--panel-border)] px-6 py-4">
         <div className="flex gap-2">
           <input
             disabled
             className="w-full rounded-2xl border border-[var(--panel-border)] bg-[var(--panel)] px-4 py-3 text-sm text-[var(--fg)] placeholder:text-[var(--fg-muted)] opacity-70 cursor-not-allowed"
-            placeholder="Type a keyword… (API 연결 예정)"
+            placeholder="Type a keyword (API integration planned)"
           />
           <button
             type="button"
