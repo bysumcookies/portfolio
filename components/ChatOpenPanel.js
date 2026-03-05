@@ -26,7 +26,7 @@ export default function ChatOpenPanel({ onClose }) {
           className="h-9 w-9 rounded-full border border-[var(--panel-border)] bg-[var(--panel)] hover:bg-black/5 dark:hover:bg-white/10 transition flex items-center justify-center"
         >
           <span className="text-[var(--fg-muted)] text-lg leading-none" aria-hidden="true">
-            ¡¿
+            Ã—
           </span>
         </button>
       </div>
