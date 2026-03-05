@@ -41,26 +41,25 @@ function ChatSection() {
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen flex-col">
-      <main className="flex-1">
-        <div className="min-h-[calc(100vh-4rem)] flex items-start pt-20 pb-16 sm:pt-24 sm:pb-20">
-          <div className="w-full mx-auto px-6 sm:px-10 lg:px-14 max-w-[860px] lg:max-w-[920px] xl:max-w-[980px]">
-            <HeroTitle />
+    <main className="flex-1">
+      <div className="flex items-start pt-20 pb-16 sm:pt-24 sm:pb-20">
+        <div className="w-full mx-auto px-6 sm:px-10 lg:px-14 max-w-[860px] lg:max-w-[920px] xl:max-w-[980px]">
+          <HeroTitle />
 
-            <div className="mt-6">
-              <HeroCTA />
-            </div>
-
-            <div className="mt-16 sm:mt-18 lg:mt-20">
-              <ChatSection />
-            </div>
-
-            <div className="mt-6">
-              <SocialLinks />
-            </div>
+          <div className="mt-6">
+            <HeroCTA />
           </div>
+
+          <div className="mt-16 sm:mt-18 lg:mt-20">
+            <ChatSection />
+          </div>
+
+          <div className="mt-6">
+            <SocialLinks />
+          </div>
+          
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
   );
 }
