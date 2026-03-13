@@ -1,0 +1,12 @@
+Name: Min-kyeong
+Goal: Preparing for a cloud security engineering career.
+Current focus:
+- Building a portfolio
+- Studying AWS fundamentals
+- Preparing for certifications
+
+[Contact]
+Email: bysumcontact@gmail.com
+LinkedIn: https://www.linkedin.com/in/your-profile
+GitHub: https://github.com/bysumcookies
+Portfolio: https://bytesumcookies.com

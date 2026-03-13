@@ -2,83 +2,69 @@
 
 import { useState } from "react";
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:5000";
+const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/$/, "");
+const CHAT_ENDPOINT = API_BASE
+  ? `${API_BASE}/api/chat`
+  : "http://127.0.0.1:5000/api/chat";
 
 const QUICK_PROMPTS = [
-  { label: "Projects", prompt: "프로젝트에 대해 알려줘" },
-  { label: "Certs", prompt: "자격증 준비에 대해 알려줘" },
-  { label: "Timeline", prompt: "학습 타임라인에 대해 알려줘" },
-  { label: "Contact", prompt: "연락 방법에 대해 알려줘" },
+  { label: "Projects", prompt: "Tell me about your projects." },
+  {
+    label: "Certs",
+    prompt: "Tell me about the certifications you are preparing for.",
+  },
+  { label: "Timeline", prompt: "Show me your current study timeline." },
+  { label: "Contact", prompt: "How can I contact you?" },
 ];
 
 export default function ChatOpenPanel({ onClose }) {
-  // 1) 메시지 목록: 이제 고정 배열이 아니라 '상태'로 관리
   const [messages, setMessages] = useState([
     {
       role: "assistant",
-      text: "Pick a prompt below and I will guide you to Projects / Certs / Timeline.",
+      text: "Choose a quick prompt or ask your own question. I can guide you through projects, certifications, and study progress.",
     },
   ]);
-
-  // 2) 입력값 상태
   const [input, setInput] = useState("");
-
-  // 3) 로딩 / 에러 상태
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // 4) 실제 전송 함수
   async function sendMessage(rawText) {
     const trimmed = rawText.trim();
-
     if (!trimmed || loading) return;
 
     setError("");
-
-    // 사용자 메시지를 먼저 화면에 추가
-    setMessages((prev) => [
-      ...prev,
-      { role: "user", text: trimmed },
-    ]);
-
+    setMessages((prev) => [...prev, { role: "user", text: trimmed }]);
     setInput("");
     setLoading(true);
 
     try {
-      const res = await fetch(
-        `${API_BASE}/sendMessage?message=${encodeURIComponent(trimmed)}`
-      );
+      const res = await fetch(CHAT_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ message: trimmed }),
+      });
 
       const data = await res.json();
 
       if (!res.ok || !data.ok) {
-        throw new Error(data.error || "응답을 불러오지 못했습니다.");
+        throw new Error(data.error || "Failed to load a response.");
       }
 
-      // 백엔드 app.py에서 answer로 바꿨으므로 data.answer를 읽음
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", text: data.answer },
-      ]);
+      setMessages((prev) => [...prev, { role: "assistant", text: data.answer }]);
     } catch (err) {
-      setError(err.message || "알 수 없는 오류가 발생했습니다.");
+      setError(err.message || "An unexpected error occurred.");
     } finally {
       setLoading(false);
     }
   }
 
-  // 5) Enter 전송
   function handleKeyDown(e) {
     if (e.key === "Enter") {
       e.preventDefault();
       sendMessage(input);
     }
-  }
-
-  // 6) 퀵 프롬프트 버튼 클릭 시 바로 전송
-  function handleQuickPrompt(prompt) {
-    sendMessage(prompt);
   }
 
   return (
@@ -87,7 +73,7 @@ export default function ChatOpenPanel({ onClose }) {
         <div>
           <div className="text-sm font-medium text-[var(--fg)]">Guide</div>
           <div className="text-[11px] text-[var(--fg-muted)] tracking-wide">
-            Chat UI (API-ready)
+            Portfolio chat
           </div>
         </div>
 
@@ -100,7 +86,7 @@ export default function ChatOpenPanel({ onClose }) {
             className="text-[var(--fg-muted)] text-lg leading-none"
             aria-hidden="true"
           >
-            ×
+            X
           </span>
         </button>
       </div>
@@ -127,7 +113,7 @@ export default function ChatOpenPanel({ onClose }) {
           {loading && (
             <div className="flex justify-start">
               <div className="max-w-[78%] rounded-2xl border border-[var(--panel-border)] bg-white/5 dark:bg-white/5 px-4 py-3 text-sm text-[var(--fg)] leading-relaxed">
-                Thinking...
+                Preparing a response...
               </div>
             </div>
           )}
@@ -138,7 +124,7 @@ export default function ChatOpenPanel({ onClose }) {
             <button
               key={item.label}
               type="button"
-              onClick={() => handleQuickPrompt(item.prompt)}
+              onClick={() => sendMessage(item.prompt)}
               disabled={loading}
               className="rounded-full border border-[var(--panel-border)] bg-[var(--panel)] px-3 py-2 text-xs text-[var(--fg)] hover:bg-black/5 dark:hover:bg-white/10 transition disabled:opacity-50"
             >
@@ -156,7 +142,7 @@ export default function ChatOpenPanel({ onClose }) {
             onKeyDown={handleKeyDown}
             disabled={loading}
             className="w-full rounded-2xl border border-[var(--panel-border)] bg-[var(--panel)] px-4 py-3 text-sm text-[var(--fg)] placeholder:text-[var(--fg-muted)]"
-            placeholder="Type a message..."
+            placeholder="Type a message."
           />
 
           <button
@@ -169,11 +155,7 @@ export default function ChatOpenPanel({ onClose }) {
           </button>
         </div>
 
-        {error && (
-          <p className="mt-2 text-xs text-red-400">
-            {error}
-          </p>
-        )}
+        {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
       </div>
     </aside>
   );
