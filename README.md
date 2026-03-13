@@ -10,11 +10,6 @@ Next.js frontend with a Flask backend for a portfolio chat guide.
 
 ## Environment files
 
-Use these examples as templates:
-
-- `.env.local.example`
-- `backend/.env.example`
-
 ## Local run
 
 ### Frontend

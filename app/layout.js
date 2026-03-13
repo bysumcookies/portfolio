@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { ThemeProvider } from './ThemeProvider'
@@ -39,7 +40,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="ko" suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -65,12 +66,12 @@ export default function RootLayout({ children }) {
               <div className="flex flex-col items-center justify-between gap-4 py-4 sm:flex-row">
                 <div className="text-xs text-[var(--fg-muted)]">(c) 2026 AltOr Portfolio (Demo)</div>
                 <div className="flex items-center gap-6 text-xs text-[var(--fg-muted)]">
-                  <a
+                  <Link
                     href="/about#contact"
                     className="transition-colors hover:text-[var(--accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] rounded-sm"
                   >
                     Contact
-                  </a>
+                  </Link>
                 </div>
               </div>
             </div>

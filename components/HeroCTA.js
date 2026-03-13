@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
+
 export default function HeroCTA() {
   return (
     <div className="flex flex-wrap gap-2.5 sm:gap-4">
-      <a
+      <Link
         href="/projects"
         className="
           inline-flex items-center justify-center
@@ -18,9 +20,9 @@ export default function HeroCTA() {
         "
       >
         Projects
-      </a>
+      </Link>
 
-      <a
+      <Link
         href="/contact"
         className="
           inline-flex items-center justify-center
@@ -35,7 +37,7 @@ export default function HeroCTA() {
         "
       >
         Contact
-      </a>
+      </Link>
     </div>
   );
 }
