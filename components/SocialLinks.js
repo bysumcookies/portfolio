@@ -2,7 +2,7 @@
 
 export default function SocialLinks() {
   const baseBtn =
-    "inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--panel)] text-[var(--fg-muted)] border border-[var(--panel-border)] hover:text-[var(--accent-hover)] hover:bg-black/5 dark:hover:bg-white/10 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]";
+    "inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--panel)] text-[var(--fg-muted)] border border-[var(--panel-border)] shadow-[var(--shadow)] hover:text-[var(--accent-hover)] hover:bg-black/5 dark:hover:bg-white/10 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]";
 
   return (
     <div className="flex items-center gap-3">

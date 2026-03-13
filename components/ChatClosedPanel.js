@@ -13,38 +13,17 @@ export default function ChatClosedPanel({ onOpenChat }) {
 
       <div className="relative flex h-full flex-col px-7 py-8 sm:px-8 sm:py-9">
         <div className="flex-1">
-          <div className="mt-2 text-[28px] sm:text-[20px] font-semibold leading-[1.05] text-[var(--fg)]">
-            Hello, my name is
-          </div>
-
-          <div className="mt-2 text-[34px] sm:text-[42px] font-extrabold leading-[1.0] text-[var(--fg)]">
-            <span style={{ color: "var(--accent-hover)" }}>
-              MIN-KYEONG
-            </span>
-          </div>
-
-          <div className="mt-6 flex items-center gap-2">
-            {["GitHub", "LinkedIn", "Email", "Blog"].map((label) => (
-              <span
-                key={label}
-                title={label}
-                className="h-2.5 w-2.5 rounded-full bg-[var(--panel-border)]"
-              />
-            ))}
-          </div>
-        </div>
-
-        <div className="flex-[2] flex flex-col justify-end">
-          <div className="rounded-2xl border border-[var(--panel-border)] bg-white/5 dark:bg-white/5 p-5">
+          <div className="w-full">
             <div className="text-sm text-[var(--fg)] font-medium">
-              Start the guided chat
+              질문으로 포트폴리오 살펴보기
             </div>
-            <div className="mt-2 text-xs text-[var(--fg-muted)] leading-relaxed">
-              Ask about projects, certifications, study progress, and contact details.
+            <div className="mt-2 max-w-[520px] text-xs text-[var(--fg-muted)] leading-relaxed">
+              프로젝트, 자격증, 학습 흐름, 연락 방법을 채팅으로 빠르게 확인할 수
+              있습니다.
             </div>
 
             <div className="mt-4 flex flex-wrap gap-2">
-              {["Projects", "Certs", "Timeline", "About me"].map((t) => (
+              {["프로젝트", "자격증", "학습 흐름", "연락 방법"].map((t) => (
                 <button
                   key={t}
                   type="button"
@@ -55,15 +34,17 @@ export default function ChatClosedPanel({ onOpenChat }) {
                 </button>
               ))}
             </div>
-
-            <button
-              type="button"
-              onClick={onOpenChat}
-              className="mt-5 inline-flex w-full items-center justify-center rounded-2xl px-4 py-3 text-sm font-semibold text-white bg-[var(--accent-from)] shadow-[0_12px_30px_rgba(5,38,89,0.18)] hover:brightness-[1.03] active:brightness-[0.98] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
-            >
-              Open chat
-            </button>
           </div>
+        </div>
+
+        <div className="mt-auto pt-6">
+          <button
+            type="button"
+            onClick={onOpenChat}
+            className="inline-flex w-full items-center justify-center rounded-2xl px-4 py-3 text-sm font-semibold text-white bg-[var(--accent-from)] shadow-[0_12px_30px_rgba(5,38,89,0.18)] hover:brightness-[1.03] active:brightness-[0.98] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
+          >
+            채팅 열기
+          </button>
         </div>
       </div>
     </section>

@@ -64,7 +64,7 @@ export default function RootLayout({ children }) {
           <footer className="border-t border-[var(--panel-border)] bg-[var(--panel)] backdrop-blur-sm">
             <div className="mx-auto w-full max-w-screen-2xl px-4 sm:px-6 lg:px-10">
               <div className="flex flex-col items-center justify-between gap-4 py-4 sm:flex-row">
-                <div className="text-xs text-[var(--fg-muted)]">(c) 2026 AltOr Portfolio (Demo)</div>
+                <div className="text-xs text-[var(--fg-muted)]">© 2026 bytesumcookies. Cloud Security Portfolio.</div>
                 <div className="flex items-center gap-6 text-xs text-[var(--fg-muted)]">
                   <Link
                     href="/about#contact"
