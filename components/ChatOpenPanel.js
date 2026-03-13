@@ -5,7 +5,7 @@ import { useState } from "react";
 const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/$/, "");
 const CHAT_ENDPOINT = API_BASE
   ? `${API_BASE}/api/chat`
-  : "https://portfolio-backend-6ies.onrender.com";
+  : "https://portfolio-backend-6ies.onrender.com/api/chat";
 
 const QUICK_PROMPTS = [
   { label: "Projects", prompt: "Tell me about your projects." },
