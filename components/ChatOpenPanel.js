@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/$/, "");
 const CHAT_ENDPOINT = API_BASE
@@ -9,13 +9,14 @@ const CHAT_ENDPOINT = API_BASE
 
 const QUICK_PROMPTS = [
   { label: "프로젝트", prompt: "진행 중인 프로젝트에 대해 알려주세요." },
-  {
-    label: "자격증",
-    prompt: "준비 중인 자격증에 대해 알려주세요.",
-  },
+  { label: "자격증", prompt: "준비 중인 자격증에 대해 알려주세요." },
   { label: "학습 흐름", prompt: "현재 학습 흐름에 대해 알려주세요." },
   { label: "연락 방법", prompt: "연락할 수 있는 방법을 알려주세요." },
 ];
+
+const assistantBubbleStyle = {
+  background: "color-mix(in srgb, var(--accent-hover) 22%, transparent)",
+};
 
 export default function ChatOpenPanel({ onClose }) {
   const [messages, setMessages] = useState([
@@ -27,6 +28,15 @@ export default function ChatOpenPanel({ onClose }) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const scrollAreaRef = useRef(null);
+  const messagesEndRef = useRef(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "end",
+    });
+  }, [messages, loading]);
 
   async function sendMessage(rawText) {
     const trimmed = rawText.trim();
@@ -73,7 +83,7 @@ export default function ChatOpenPanel({ onClose }) {
         <div>
           <div className="text-sm font-medium text-[var(--fg)]">Chat</div>
           <div className="text-[11px] text-[var(--fg-muted)] tracking-wide">
-            편하게 채팅으로 물어보세요!
+            편하게 채팅으로 물어보세요
           </div>
         </div>
 
@@ -91,7 +101,7 @@ export default function ChatOpenPanel({ onClose }) {
         </button>
       </div>
 
-      <div className="flex-1 overflow-auto px-6 py-6">
+      <div ref={scrollAreaRef} className="flex-1 overflow-auto px-6 py-6">
         <div className="space-y-4">
           {messages.map((m, idx) => (
             <div
@@ -102,8 +112,9 @@ export default function ChatOpenPanel({ onClose }) {
                 className={
                   m.role === "user"
                     ? "max-w-[78%] whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm leading-relaxed text-white bg-[var(--accent-from)]"
-                    : "max-w-[78%] whitespace-pre-wrap rounded-2xl border border-[var(--panel-border)] bg-white/5 dark:bg-white/5 px-4 py-3 text-sm text-[var(--fg)] leading-relaxed"
+                    : "max-w-[78%] whitespace-pre-wrap rounded-2xl border border-[var(--panel-border)] px-4 py-3 text-sm text-[var(--fg)] leading-relaxed"
                 }
+                style={m.role === "assistant" ? assistantBubbleStyle : undefined}
               >
                 {m.text}
               </div>
@@ -112,11 +123,16 @@ export default function ChatOpenPanel({ onClose }) {
 
           {loading && (
             <div className="flex justify-start">
-              <div className="max-w-[78%] rounded-2xl border border-[var(--panel-border)] bg-white/5 dark:bg-white/5 px-4 py-3 text-sm text-[var(--fg)] leading-relaxed">
+              <div
+                className="max-w-[78%] rounded-2xl border border-[var(--panel-border)] px-4 py-3 text-sm text-[var(--fg)] leading-relaxed"
+                style={assistantBubbleStyle}
+              >
                 답변을 준비하고 있습니다.
               </div>
             </div>
           )}
+
+          <div ref={messagesEndRef} />
         </div>
 
         <div className="mt-6 flex flex-wrap gap-2">
