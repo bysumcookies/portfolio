@@ -83,7 +83,7 @@ export default function ChatOpenPanel({ onClose }) {
         <div>
           <div className="text-sm font-medium text-[var(--fg)]">Chat</div>
           <div className="text-[11px] text-[var(--fg-muted)] tracking-wide">
-            편하게 채팅으로 물어보세요
+            궁금한 것을 채팅으로 물어보세요
           </div>
         </div>
 

@@ -15,11 +15,10 @@ export default function ChatClosedPanel({ onOpenChat }) {
         <div className="flex-1">
           <div className="w-full">
             <div className="text-sm text-[var(--fg)] font-medium">
-              질문으로 포트폴리오 살펴보기
+              채팅으로 직접 포트폴리오 살펴보기
             </div>
             <div className="mt-2 max-w-[520px] text-xs text-[var(--fg-muted)] leading-relaxed">
-              프로젝트, 자격증, 학습 흐름, 연락 방법을 채팅으로 빠르게 확인할 수
-              있습니다.
+              프로젝트, 자격증, 학습 흐름, 연락 방법을 채팅으로 빠르게 확인할 수 있습니다.
             </div>
 
             <div className="mt-4 flex flex-wrap gap-2">
