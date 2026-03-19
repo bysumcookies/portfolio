@@ -81,7 +81,9 @@ export default function ChatOpenPanel({ onClose }) {
     <aside className="relative h-full w-full rounded-3xl border border-[var(--panel-border)] bg-[var(--panel)] backdrop-blur-md overflow-hidden flex flex-col">
       <div className="flex items-center justify-between border-b border-[var(--panel-border)] px-6 py-4">
         <div>
-          <div className="text-sm font-medium text-[var(--fg)]">Chat</div>
+          <div className="text-sm font-medium text-[var(--fg)]">
+            Chat with Me
+            </div>
           <div className="text-[11px] text-[var(--fg-muted)] tracking-wide">
             궁금한 것을 채팅으로 물어보세요
           </div>

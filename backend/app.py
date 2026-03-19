@@ -1,10 +1,13 @@
 import os
 from pathlib import Path
+from uuid import uuid4
 
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from google import genai
+
+from db import save_message
 
 load_dotenv()
 
@@ -96,6 +99,7 @@ def generate_answer(prompt):
 def chat():
     data = request.get_json(silent=True) or {}
     user_message = str(data.get("message", "")).strip()
+    chat_id = str(data.get("chatId", "")).strip() or str(uuid4())
 
     if not user_message:
         return jsonify({
@@ -114,8 +118,12 @@ def chat():
         prompt = build_prompt(user_message, profile_text)
         answer = generate_answer(prompt)
 
+        save_message(chat_id, "user", user_message)
+        save_message(chat_id, "assistant", answer)
+
         return jsonify({
             "ok": True,
+            "chatId": chat_id,
             "answer": answer,
         }), 200
     except Exception as exc:
