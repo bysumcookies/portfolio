@@ -3,9 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/$/, "");
-const CHAT_ENDPOINT = API_BASE
-  ? `${API_BASE}/api/chat`
-  : "https://portfolio-backend-6ies.onrender.com/api/chat";
+const CHAT_ENDPOINT = `${API_BASE}/api/chat`;
 
 const QUICK_PROMPTS = [
   { label: "프로젝트", prompt: "진행 중인 프로젝트에 대해 알려주세요." },
