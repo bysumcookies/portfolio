@@ -1,12 +1,21 @@
+export const runtime = "nodejs";
+
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { GoogleGenAI } from "@google/genai";
-import { saveMessage } from "@/lib/mongodb";
+import { saveMessages } from "@/lib/mongodb";
 
 const API_KEY = process.env.GEMINI_API_KEY;
 const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
 const ai = API_KEY ? new GoogleGenAI({ apiKey: API_KEY }) : null;
+
+function getErrorMessage(error) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return String(error);
+}
 
 async function loadProfileText() {
   const profilePath = path.join(process.cwd(), "backend", "profile.txt");
@@ -40,23 +49,39 @@ ${userMessage}
 }
 
 async function generateAnswer(prompt) {
-    const response = await ai.models.generateContent({
-      model: MODEL,
-      contents: prompt,
-    });
-  
-    const text = response.text?.trim();
-  
-    if (!text) {
-      throw new Error("Failed to generate a response.");
-    }
-  
-    return text;
+  if (!ai) {
+    throw new Error("GEMINI_API_KEY is not configured");
+  }
+
+  const response = await ai.models.generateContent({
+    model: MODEL,
+    contents: prompt,
+  });
+
+  const text = response.text?.trim();
+
+  if (!text) {
+    throw new Error("Gemini 응답 텍스트가 비어 있습니다.");
+  }
+
+  return text;
 }
 
-
 export async function POST(request) {
-  const data = await request.json();
+  let data;
+
+  try {
+    data = await request.json();
+  } catch (error) {
+    return Response.json(
+      {
+        ok: false,
+        error: "잘못된 JSON 요청입니다.",
+      },
+      { status: 400 }
+    );
+  }
+
   const message = String(data?.message || "").trim();
   const chatId = String(data?.chatId || "").trim() || "temp-chat-id";
 
@@ -70,7 +95,7 @@ export async function POST(request) {
     );
   }
 
-  if (!ai) {
+  if (!API_KEY) {
     return Response.json(
       {
         ok: false,
@@ -80,26 +105,59 @@ export async function POST(request) {
     );
   }
 
-  try {
-    const profileText = await loadProfileText();
-    const prompt = buildPrompt(message, profileText);
-    const answer = await generateAnswer(prompt);
+  let profileText;
+  let prompt;
+  let answer;
 
-    await saveMessage(chatId, "user", message);
-    await saveMessage(chatId, "assistant", answer);
-    
-    return Response.json({
-      ok: true,
-      chatId,
-      answer,
-    });
+  try {
+    profileText = await loadProfileText();
+    prompt = buildPrompt(message, profileText);
   } catch (error) {
+    console.error("[Profile Load Error]", error);
+
     return Response.json(
       {
         ok: false,
-        error: `Gemini API error: ${error.message}`,
+        stage: "profile",
+        error: `profile.txt 로드 또는 프롬프트 생성 실패: ${getErrorMessage(error)}`,
+      },
+      { status: 500 }
+    );
+  }
+
+  try {
+    answer = await generateAnswer(prompt);
+  } catch (error) {
+    console.error("[Gemini Error]", error);
+
+    return Response.json(
+      {
+        ok: false,
+        stage: "gemini",
+        error: `Gemini 응답 생성 실패: ${getErrorMessage(error)}`,
       },
       { status: 502 }
     );
   }
+
+  try {
+    await saveMessages(chatId, message, answer);
+  } catch (error) {
+    console.error("[MongoDB Error]", error);
+
+    return Response.json(
+      {
+        ok: false,
+        stage: "mongodb",
+        error: `MongoDB 저장 실패: ${getErrorMessage(error)}`,
+      },
+      { status: 500 }
+    );
+  }
+
+  return Response.json({
+    ok: true,
+    chatId,
+    answer,
+  });
 }
