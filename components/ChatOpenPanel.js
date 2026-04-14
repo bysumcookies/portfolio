@@ -15,6 +15,10 @@ const assistantBubbleStyle = {
   background: "color-mix(in srgb, var(--accent-hover) 22%, transparent)",
 };
 
+const suggestionButtonStyle = {
+  background: "color-mix(in srgb, var(--accent-hover) 12%, white)",
+};
+
 export default function ChatOpenPanel({ onClose }) {
   const [messages, setMessages] = useState([
     {
@@ -22,18 +26,27 @@ export default function ChatOpenPanel({ onClose }) {
       text: "궁금한 내용을 바로 물어보시거나 아래 질문을 눌러보세요.\n프로젝트, 자격증, 학습 흐름을 중심으로 안내해드릴게요.",
     },
   ]);
+  const [suggestedQuestions, setSuggestedQuestions] = useState([]);
+  const [hasSuccessfulAnswer, setHasSuccessfulAnswer] = useState(false);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const scrollAreaRef = useRef(null);
   const messagesEndRef = useRef(null);
 
+  const lastAssistantIndex = (() => {
+    for (let i = messages.length - 1; i >= 0; i -= 1) {
+      if (messages[i].role === "assistant") return i;
+    }
+    return -1;
+  })();
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({
       behavior: "smooth",
       block: "end",
     });
-  }, [messages, loading]);
+  }, [messages, loading, suggestedQuestions]);
 
   async function sendMessage(rawText) {
     const trimmed = rawText.trim();
@@ -56,10 +69,19 @@ export default function ChatOpenPanel({ onClose }) {
       const data = await res.json();
 
       if (!res.ok || !data.ok) {
-        throw new Error(data.error || "Failed to load a response.");
+        setError(
+          typeof data.answer === "string"
+            ? data.answer
+            : data.error?.code || "에러가 발생했습니다."
+        );
+        return;
       }
 
       setMessages((prev) => [...prev, { role: "assistant", text: data.answer }]);
+      setSuggestedQuestions(
+        Array.isArray(data.suggestedQuestions) ? data.suggestedQuestions : []
+      );
+      setHasSuccessfulAnswer(true);
     } catch (err) {
       setError(err.message || "An unexpected error occurred.");
     } finally {
@@ -80,7 +102,7 @@ export default function ChatOpenPanel({ onClose }) {
         <div>
           <div className="text-sm font-medium text-[var(--fg)]">
             Chat with Me
-            </div>
+          </div>
           <div className="text-[11px] text-[var(--fg-muted)] tracking-wide">
             궁금한 것을 채팅으로 물어보세요
           </div>
@@ -103,20 +125,57 @@ export default function ChatOpenPanel({ onClose }) {
       <div ref={scrollAreaRef} className="flex-1 overflow-auto px-6 py-6">
         <div className="space-y-4">
           {messages.map((m, idx) => (
-            <div
-              key={idx}
-              className={m.role === "user" ? "flex justify-end" : "flex justify-start"}
-            >
+            <div key={idx}>
               <div
-                className={
-                  m.role === "user"
-                    ? "max-w-[78%] whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm leading-relaxed text-white bg-[var(--accent-from)]"
-                    : "max-w-[78%] whitespace-pre-wrap rounded-2xl border border-[var(--panel-border)] px-4 py-3 text-sm text-[var(--fg)] leading-relaxed"
-                }
-                style={m.role === "assistant" ? assistantBubbleStyle : undefined}
+                className={m.role === "user" ? "flex justify-end" : "flex justify-start"}
               >
-                {m.text}
+                <div
+                  className={
+                    m.role === "user"
+                      ? "max-w-[78%] whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm leading-relaxed text-white bg-[var(--accent-from)]"
+                      : "max-w-[78%] whitespace-pre-wrap rounded-2xl border border-[var(--panel-border)] px-4 py-3 text-sm text-[var(--fg)] leading-relaxed"
+                  }
+                  style={m.role === "assistant" ? assistantBubbleStyle : undefined}
+                >
+                  {m.text}
+                </div>
               </div>
+
+              {!hasSuccessfulAnswer && idx === 0 && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {QUICK_PROMPTS.map((item) => (
+                    <button
+                      key={item.label}
+                      type="button"
+                      onClick={() => sendMessage(item.prompt)}
+                      disabled={loading}
+                      className="rounded-full border border-[var(--panel-border)] bg-[var(--panel)] px-3 py-2 text-xs text-[var(--fg)] hover:bg-black/5 dark:hover:bg-white/10 transition disabled:opacity-50"
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {hasSuccessfulAnswer &&
+                m.role === "assistant" &&
+                idx === lastAssistantIndex &&
+                suggestedQuestions.length > 0 && (
+                  <div className="mt-3 flex flex-col items-start gap-2">
+                    {suggestedQuestions.map((question, questionIdx) => (
+                      <button
+                        key={`${question}-${questionIdx}`}
+                        type="button"
+                        onClick={() => sendMessage(question)}
+                        disabled={loading}
+                        className="max-w-[78%] rounded-2xl border border-[var(--panel-border)] px-4 py-2.5 text-left text-sm text-[var(--fg)] leading-relaxed whitespace-normal break-words transition hover:brightness-[0.99] disabled:opacity-50"
+                        style={suggestionButtonStyle}
+                      >
+                        {question}
+                      </button>
+                    ))}
+                  </div>
+                )}
             </div>
           ))}
 
@@ -132,20 +191,6 @@ export default function ChatOpenPanel({ onClose }) {
           )}
 
           <div ref={messagesEndRef} />
-        </div>
-
-        <div className="mt-6 flex flex-wrap gap-2">
-          {QUICK_PROMPTS.map((item) => (
-            <button
-              key={item.label}
-              type="button"
-              onClick={() => sendMessage(item.prompt)}
-              disabled={loading}
-              className="rounded-full border border-[var(--panel-border)] bg-[var(--panel)] px-3 py-2 text-xs text-[var(--fg)] hover:bg-black/5 dark:hover:bg-white/10 transition disabled:opacity-50"
-            >
-              {item.label}
-            </button>
-          ))}
         </div>
       </div>
 
