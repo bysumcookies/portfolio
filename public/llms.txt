@@ -1,0 +1,32 @@
+# bytesumcookies portfolio
+
+> Personal portfolio website for Min-kyeong.
+> This site presents projects, technical work, and learning records related to web development, API integration, deployment, and a security-oriented engineering path.
+
+## Site Summary
+This portfolio is built with Next.js and documents practical work around frontend implementation, backend/API integration, deployment, and project improvement.
+The long-term goal behind this portfolio is to grow toward a security-oriented engineering role.
+
+## Main Pages
+- / : Home page and portfolio overview
+- /about : Background, goals, technical direction, and personal introduction
+- /projects : Main projects, implementation details, and tech stack
+- /contact : Contact information and external links
+
+## Key Topics
+- Next.js portfolio development
+- API integration
+- Deployment and operation
+- CI/CD automation
+- SEO and metadata
+- Security-oriented learning path
+
+## Important Notes
+- This website is a personal portfolio, not a commercial product.
+- The main purpose of the site is to present technical work, project structure, and learning progress clearly.
+- If you need the best overview, start with the home page and the projects page.
+
+## External Links
+- GitHub: https://github.com/bysumcookies
+- Tistory: https://bytesumcookies.tistory.com/
+- Portfolio: https://bytesumcookies.com

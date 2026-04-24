@@ -14,15 +14,16 @@ export const metadata = {
     template: '%s | bytesumcookies',
   },
 
-  description: 'Cloud security portfolio & study log.',
+  description:
+    'Personal portfolio site for Min-kyeong, documenting web implementation, API integration, deployment, and a security-oriented engineering path.',
 
   openGraph: {
     title: 'bytesumcookies | Portfolio',
-    description: 'Cloud security portfolio & study log.',
+    description:
+      'Personal portfolio site for Min-kyeong, documenting web implementation, API integration, deployment, and a security-oriented engineering path.',
     url: 'https://bytesumcookies.com',
     siteName: 'bytesumcookies',
     type: 'website',
-
     images: [
       {
         url: '/og.png',

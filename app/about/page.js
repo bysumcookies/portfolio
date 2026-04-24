@@ -23,7 +23,7 @@ export default function AboutPage() {
             >
               <div className="text-xs text-[var(--fg-muted)]">Email</div>
               <div className="mt-1 font-medium">bysumcontact@gmail.com</div>
-            </a>
+            </a> 
 
             <a
               className="rounded-xl border border-[var(--panel-border)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--fg)] hover:bg-black/5 dark:hover:bg-white/10 transition"
