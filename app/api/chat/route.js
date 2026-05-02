@@ -12,13 +12,9 @@ const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
 const ai = API_KEY ? new GoogleGenAI({ apiKey: API_KEY }) : null;
 
-const RESPONSE_SCHEMA = {
+const SUGGESTIONS_SCHEMA = {
   type: "object",
   properties: {
-    answer: {
-      type: "string",
-      description: "사용자 질문에 대한 답변",
-    },
     suggestedQuestions: {
       type: "array",
       description: "답변과 자연스럽게 이어지는 후속 질문 3개",
@@ -29,7 +25,7 @@ const RESPONSE_SCHEMA = {
       maxItems: 3,
     },
   },
-  required: ["answer", "suggestedQuestions"],
+  required: ["suggestedQuestions"],
   additionalProperties: false,
 };
 
@@ -38,18 +34,15 @@ async function loadProfileText() {
   return readFile(profilePath, "utf-8");
 }
 
-function buildPrompt(userMessage, profileText) {
+function buildAnswerPrompt(userMessage, profileText) {
   return `
 너는 김민경 본인인 것처럼 대답한다.
 답변은 반드시 profile.txt에 있는 내용만 근거로 작성한다.
 profile.txt에 없는 내용은 추측해서 만들지 말고, 모른다고 솔직하게 답한다.
 
-반드시 JSON만 출력한다.
-마크다운, 코드블록, 설명문, 서두/말미 문장 없이 JSON 객체만 출력한다.
-
-JSON 형식 규칙:
-- answer: 사용자 질문에 대한 자연스럽고 명확한 한국어 답변
-- suggestedQuestions: 답변과 자연스럽게 이어지는 후속 질문 3개 문자열 배열
+이번 응답에서는 추천 질문을 만들지 않는다.
+사용자 질문에 대한 answer 본문만 자연어 텍스트로 출력한다.
+JSON, 마크다운, 코드블록, 목록 기호, 설명용 라벨을 출력하지 않는다.
 
 답변 규칙:
 - 답변은 자연스럽고 명확한 한국어로 작성한다.
@@ -60,10 +53,8 @@ JSON 형식 규칙:
 - 전체 톤은 신입 포트폴리오 답변처럼 차분하고 정돈된 느낌으로 유지한다.
 - 사용자가 더 자세한 설명을 요청하지 않았다면 보통 2문장~4문장 정도로 답한다.
 - profile.txt에 답변 톤이나 표현 방식이 적혀 있다면 그 지침을 우선 반영한다.
-- answer에는 마크다운 문법(예: **굵게**, # 제목, * 목록기호)을 사용하지 않는다.
+- 마크다운 문법(예: **굵게**, # 제목, * 목록기호)을 사용하지 않는다.
 - 필요하면 줄바꿈은 사용해도 되지만, 전체 답변은 일반 텍스트처럼 자연스럽게 보이도록 작성한다.
-- suggestedQuestions는 profile.txt 범위 안에서만 작성한다.
-- 모르는 내용은 억지로 추천 질문으로 만들지 말고, 현재 답변과 자연스럽게 이어지는 질문만 작성한다.
 
 [profile.txt]
 ${profileText}
@@ -73,45 +64,39 @@ ${userMessage}
   `.trim();
 }
 
-async function generateStructuredAnswer(prompt) {
-  if (!ai) {
-    throw new Error("GEMINI_API_KEY is not configured");
-  }
+function buildSuggestionsPrompt(userMessage, answer, profileText) {
+  return `
+너는 김민경의 포트폴리오 챗봇이다.
+아래 profile.txt, 사용자 질문, 이미 생성된 답변을 바탕으로
+사용자가 이어서 물어볼 만한 후속 질문 3개를 만든다.
 
-  const response = await ai.models.generateContent({
-    model: MODEL,
-    contents: prompt,
-    config: {
-      responseMimeType: "application/json",
-      responseJsonSchema: RESPONSE_SCHEMA,
-    },
-  });
+반드시 JSON만 출력한다.
+마크다운, 코드블록, 설명문, 서두/말미 문장 없이 JSON 객체만 출력한다.
 
-  const text = response.text?.trim();
-
-  if (!text) {
-    throw new Error("Gemini 응답 텍스트가 비어 있습니다.");
-  }
-
-  let parsed;
-
-  try {
-    parsed = JSON.parse(text);
-  } catch (error) {
-    console.error("[JSON Parse Error]", error, text);
-    throw new Error("JSON_PARSE_FAILED");
-  }
-
-  return parsed;
+JSON 형식:
+{
+  "suggestedQuestions": ["질문1", "질문2", "질문3"]
 }
 
-function buildErrorResponse({
-  status,
-  code,
-  stage,
-  chatId,
-  userMessage,
-}) {
+추천 질문 규칙:
+- suggestedQuestions는 반드시 문자열 3개로 구성한다.
+- profile.txt 범위 안에서 답변 가능한 질문만 만든다.
+- 이미 생성된 답변과 자연스럽게 이어지는 질문으로 만든다.
+- 너무 일반적인 질문보다 프로젝트, 기술 스택, 학습 방향, 자격증, 연락처와 관련된 질문을 우선한다.
+- 모르는 내용을 억지로 추천 질문으로 만들지 않는다.
+
+[profile.txt]
+${profileText}
+
+[사용자 질문]
+${userMessage}
+
+[이미 생성된 답변]
+${answer}
+  `.trim();
+}
+
+function buildErrorResponse({ status, code, stage, chatId, userMessage }) {
   return Response.json(
     {
       ok: false,
@@ -125,6 +110,78 @@ function buildErrorResponse({
     },
     { status }
   );
+}
+
+function createSseMessage(payload) {
+  return `data: ${JSON.stringify(payload)}\n\n`;
+}
+
+function sendSse(controller, encoder, payload) {
+  controller.enqueue(encoder.encode(createSseMessage(payload)));
+}
+
+/**
+ * 스트리밍 체감을 위해 서버에서 받은 chunk를
+ * 다시 작은 글자 단위로 쪼개서 프론트로 보냅니다.
+ */
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function sendTextAsTyping(controller, encoder, text) {
+  const characters = Array.from(text);
+  const unitSize = 2;
+
+  for (let i = 0; i < characters.length; i += unitSize) {
+    const piece = characters.slice(i, i + unitSize).join("");
+
+    sendSse(controller, encoder, {
+      type: "answer",
+      text: piece,
+    });
+
+    await sleep(18);
+  }
+}
+
+async function generateSuggestedQuestions({ message, answer, profileText }) {
+  if (!ai) {
+    return [];
+  }
+
+  try {
+    const prompt = buildSuggestionsPrompt(message, answer, profileText);
+
+    const response = await ai.models.generateContent({
+      model: MODEL,
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseJsonSchema: SUGGESTIONS_SCHEMA,
+      },
+    });
+
+    const text = response.text?.trim();
+
+    if (!text) {
+      return [];
+    }
+
+    const parsed = JSON.parse(text);
+
+    const validated = validateModelResponse(
+      {
+        answer,
+        suggestedQuestions: parsed.suggestedQuestions,
+      },
+      message
+    );
+
+    return validated.suggestedQuestions;
+  } catch (error) {
+    console.error("[Suggestions Error]", error);
+    return [];
+  }
 }
 
 export async function POST(request) {
@@ -155,8 +212,7 @@ export async function POST(request) {
     message = validatedRequest.message;
     chatId = validatedRequest.chatId;
   } catch (error) {
-    const fallbackChatId =
-      String(data?.chatId || "").trim() || "temp-chat-id";
+    const fallbackChatId = String(data?.chatId || "").trim() || "temp-chat-id";
 
     return buildErrorResponse({
       status: 400,
@@ -179,13 +235,10 @@ export async function POST(request) {
 
   let profileText;
   let prompt;
-  let parsed;
-  let answer;
-  let suggestedQuestions;
 
   try {
     profileText = await loadProfileText();
-    prompt = buildPrompt(message, profileText);
+    prompt = buildAnswerPrompt(message, profileText);
   } catch (error) {
     console.error("[Profile Load Error]", error);
 
@@ -198,65 +251,109 @@ export async function POST(request) {
     });
   }
 
-  try {
-    parsed = await generateStructuredAnswer(prompt);
+  const encoder = new TextEncoder();
 
-    const validated = validateModelResponse(parsed, message);
-    answer = validated.answer;
-    suggestedQuestions = validated.suggestedQuestions;
-  } catch (error) {
-    console.error("[Gemini/Parse Error]", error);
+  const stream = new ReadableStream({
+    async start(controller) {
+      let answer = "";
 
-    const status = error?.status;
+      try {
+        const geminiStream = await ai.models.generateContentStream({
+          model: MODEL,
+          contents: prompt,
+          config: {
+            responseMimeType: "text/plain",
+          },
+        });
 
-    if (status === 429) {
-      return buildErrorResponse({
-        status: 429,
-        code: "MODEL_QUOTA_EXCEEDED",
-        stage: "gemini",
-        chatId,
-        userMessage: "지금 API 사용량 제한에 걸렸습니다. 잠시 후 다시 시도해 주세요.",
-      });
-    }
+        for await (const chunk of geminiStream) {
+          const chunkText = chunk.text || "";
 
-    if (status === 503) {
-      return buildErrorResponse({
-        status: 503,
-        code: "MODEL_TEMPORARILY_UNAVAILABLE",
-        stage: "gemini",
-        chatId,
-        userMessage: "지금 AI 응답이 몰려 있어서 잠시 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.",
-      });
-    }
+          if (!chunkText) {
+            continue;
+          }
 
-    return buildErrorResponse({
-      status: 502,
-      code: "MODEL_RESPONSE_FAILED",
-      stage: "gemini",
-      chatId,
-      userMessage: "지금은 답변을 생성하지 못했습니다. 잠시 후 다시 시도해 주세요.",
-    });
-  }
+          answer += chunkText;
 
-  try {
-    await saveMessages(chatId, message, answer);
-  } catch (error) {
-    console.error("[MongoDB Error]", error);
+          /**
+           * 기존에는 chunkText를 그대로 한 번에 보냈습니다.
+           * 그런데 Gemini chunk가 크게 오면 화면에서는 한 번에 출력되는 것처럼 보입니다.
+           * 그래서 여기서 2글자 단위로 다시 쪼개서 전송합니다.
+           */
+          await sendTextAsTyping(controller, encoder, chunkText);
+        }
 
-    return buildErrorResponse({
-      status: 500,
-      code: "MONGODB_SAVE_FAILED",
-      stage: "mongodb",
-      chatId,
-      userMessage: "답변은 생성되었지만 저장 중 문제가 발생했습니다. 다시 시도해 주세요.",
-    });
-  }
+        const trimmedAnswer = answer.trim();
 
-  return Response.json({
-    ok: true,
-    chatId,
-    answer,
-    suggestedQuestions,
-    error: null,
+        if (!trimmedAnswer) {
+          throw new Error("EMPTY_STREAM_ANSWER");
+        }
+
+        const suggestedQuestions = await generateSuggestedQuestions({
+          message,
+          answer: trimmedAnswer,
+          profileText,
+        });
+
+        sendSse(controller, encoder, {
+          type: "suggestions",
+          suggestedQuestions,
+        });
+
+        try {
+          await saveMessages(chatId, message, trimmedAnswer);
+        } catch (error) {
+          console.error("[MongoDB Error]", error);
+
+          sendSse(controller, encoder, {
+            type: "save_error",
+            message:
+              "답변은 생성되었지만 저장 중 문제가 발생했습니다. 다시 시도해 주세요.",
+          });
+        }
+
+        sendSse(controller, encoder, {
+          type: "done",
+        });
+      } catch (error) {
+        console.error("[Gemini Stream Error]", error);
+
+        const status = error?.status;
+
+        let message =
+          "지금은 답변을 생성하지 못했습니다. 잠시 후 다시 시도해 주세요.";
+        let code = "MODEL_RESPONSE_FAILED";
+
+        if (status === 429) {
+          message =
+            "지금 API 사용량 제한에 걸렸습니다. 잠시 후 다시 시도해 주세요.";
+          code = "MODEL_QUOTA_EXCEEDED";
+        }
+
+        if (status === 503) {
+          message =
+            "지금 AI 응답이 몰려 있어서 잠시 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.";
+          code = "MODEL_TEMPORARILY_UNAVAILABLE";
+        }
+
+        sendSse(controller, encoder, {
+          type: "error",
+          code,
+          message,
+        });
+      } finally {
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform",
+      Connection: "keep-alive",
+      "X-Accel-Buffering": "no",
+    },
   });
 }

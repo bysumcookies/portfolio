@@ -19,6 +19,26 @@ const suggestionButtonStyle = {
   background: "color-mix(in srgb, var(--accent-hover) 12%, white)",
 };
 
+function parseSseEvent(eventBlock) {
+  const dataLines = eventBlock
+    .split("\n")
+    .filter((line) => line.startsWith("data:"))
+    .map((line) => line.replace(/^data:\s?/, ""));
+
+  if (dataLines.length === 0) {
+    return null;
+  }
+
+  const data = dataLines.join("\n");
+
+  try {
+    return JSON.parse(data);
+  } catch (error) {
+    console.error("[SSE Parse Error]", error, data);
+    return null;
+  }
+}
+
 export default function ChatOpenPanel({ onClose }) {
   const [messages, setMessages] = useState([
     {
@@ -27,7 +47,7 @@ export default function ChatOpenPanel({ onClose }) {
     },
   ]);
   const [suggestedQuestions, setSuggestedQuestions] = useState([]);
-  const [hasSuccessfulAnswer, setHasSuccessfulAnswer] = useState(false);
+  const [hasStartedChat, setHasStartedChat] = useState(false);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -48,12 +68,113 @@ export default function ChatOpenPanel({ onClose }) {
     });
   }, [messages, loading, suggestedQuestions]);
 
+  function appendToLastAssistantMessage(text) {
+    setMessages((prev) => {
+      const next = [...prev];
+
+      for (let i = next.length - 1; i >= 0; i -= 1) {
+        if (next[i].role === "assistant") {
+          next[i] = {
+            ...next[i],
+            text: `${next[i].text}${text}`,
+          };
+          break;
+        }
+      }
+
+      return next;
+    });
+  }
+
+  function replaceLastAssistantMessage(text) {
+    setMessages((prev) => {
+      const next = [...prev];
+
+      for (let i = next.length - 1; i >= 0; i -= 1) {
+        if (next[i].role === "assistant") {
+          next[i] = {
+            ...next[i],
+            text,
+          };
+          break;
+        }
+      }
+
+      return next;
+    });
+  }
+
+  async function readStreamingResponse(res) {
+    if (!res.body) {
+      throw new Error("스트리밍 응답을 읽을 수 없습니다.");
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { value, done } = await reader.read();
+
+      if (done) {
+        break;
+      }
+
+      buffer += decoder.decode(value, { stream: true });
+
+      const eventBlocks = buffer.split("\n\n");
+      buffer = eventBlocks.pop() || "";
+
+      for (const eventBlock of eventBlocks) {
+        const event = parseSseEvent(eventBlock);
+
+        if (!event) {
+          continue;
+        }
+
+        if (event.type === "answer") {
+          appendToLastAssistantMessage(event.text || "");
+        }
+
+        if (event.type === "suggestions") {
+          setSuggestedQuestions(
+            Array.isArray(event.suggestedQuestions)
+              ? event.suggestedQuestions
+              : []
+          );
+        }
+
+        if (event.type === "save_error") {
+          setError(event.message || "답변 저장 중 문제가 발생했습니다.");
+        }
+
+        if (event.type === "error") {
+          setError(event.message || "에러가 발생했습니다.");
+
+          replaceLastAssistantMessage(
+            event.message || "지금은 답변을 생성하지 못했습니다."
+          );
+        }
+
+        if (event.type === "done") {
+          return;
+        }
+      }
+    }
+  }
+
   async function sendMessage(rawText) {
     const trimmed = rawText.trim();
     if (!trimmed || loading) return;
 
     setError("");
-    setMessages((prev) => [...prev, { role: "user", text: trimmed }]);
+    setSuggestedQuestions([]);
+    setHasStartedChat(true);
+    setMessages((prev) => [
+      ...prev,
+      { role: "user", text: trimmed },
+      { role: "assistant", text: "" },
+    ]);
     setInput("");
     setLoading(true);
 
@@ -66,24 +187,35 @@ export default function ChatOpenPanel({ onClose }) {
         body: JSON.stringify({ message: trimmed }),
       });
 
-      const data = await res.json();
+      const contentType = res.headers.get("content-type") || "";
 
-      if (!res.ok || !data.ok) {
-        setError(
-          typeof data.answer === "string"
-            ? data.answer
-            : data.error?.code || "에러가 발생했습니다."
-        );
+      if (contentType.includes("application/json")) {
+        const data = await res.json();
+
+        if (!res.ok || !data.ok) {
+          const errorMessage =
+            typeof data.answer === "string"
+              ? data.answer
+              : data.error?.code || "에러가 발생했습니다.";
+
+          setError(errorMessage);
+          replaceLastAssistantMessage(errorMessage);
+          return;
+        }
+      }
+
+      if (!res.ok) {
+        const errorMessage = "서버 응답 중 문제가 발생했습니다.";
+        setError(errorMessage);
+        replaceLastAssistantMessage(errorMessage);
         return;
       }
 
-      setMessages((prev) => [...prev, { role: "assistant", text: data.answer }]);
-      setSuggestedQuestions(
-        Array.isArray(data.suggestedQuestions) ? data.suggestedQuestions : []
-      );
-      setHasSuccessfulAnswer(true);
+      await readStreamingResponse(res);
     } catch (err) {
-      setError(err.message || "An unexpected error occurred.");
+      const errorMessage = err.message || "An unexpected error occurred.";
+      setError(errorMessage);
+      replaceLastAssistantMessage(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -124,71 +256,84 @@ export default function ChatOpenPanel({ onClose }) {
 
       <div ref={scrollAreaRef} className="flex-1 overflow-auto px-6 py-6">
         <div className="space-y-4">
-          {messages.map((m, idx) => (
-            <div key={idx}>
-              <div
-                className={m.role === "user" ? "flex justify-end" : "flex justify-start"}
-              >
-                <div
-                  className={
-                    m.role === "user"
-                      ? "max-w-[78%] whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm leading-relaxed text-white bg-[var(--accent-from)]"
-                      : "max-w-[78%] whitespace-pre-wrap rounded-2xl border border-[var(--panel-border)] px-4 py-3 text-sm text-[var(--fg)] leading-relaxed"
-                  }
-                  style={m.role === "assistant" ? assistantBubbleStyle : undefined}
-                >
-                  {m.text}
-                </div>
-              </div>
+          {messages.map((m, idx) => {
+            const isStreamingAssistant =
+              loading && m.role === "assistant" && idx === lastAssistantIndex;
 
-              {!hasSuccessfulAnswer && idx === 0 && (
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {QUICK_PROMPTS.map((item) => (
-                    <button
-                      key={item.label}
-                      type="button"
-                      onClick={() => sendMessage(item.prompt)}
-                      disabled={loading}
-                      className="rounded-full border border-[var(--panel-border)] bg-[var(--panel)] px-3 py-2 text-xs text-[var(--fg)] hover:bg-black/5 dark:hover:bg-white/10 transition disabled:opacity-50"
+            return (
+              <div key={idx}>
+                {(m.role === "user" || m.text || isStreamingAssistant) && (
+                  <div
+                    className={
+                      m.role === "user"
+                        ? "flex justify-end"
+                        : "flex justify-start"
+                    }
+                  >
+                    <div
+                      className={
+                        m.role === "user"
+                          ? "max-w-[78%] whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm leading-relaxed text-white bg-[var(--accent-from)]"
+                          : "max-w-[78%] whitespace-pre-wrap rounded-2xl border border-[var(--panel-border)] px-4 py-3 text-sm text-[var(--fg)] leading-relaxed"
+                      }
+                      style={
+                        m.role === "assistant"
+                          ? assistantBubbleStyle
+                          : undefined
+                      }
                     >
-                      {item.label}
-                    </button>
-                  ))}
-                </div>
-              )}
+                      {m.text || (isStreamingAssistant ? "응답 생성 중" : "")}
 
-              {hasSuccessfulAnswer &&
-                m.role === "assistant" &&
-                idx === lastAssistantIndex &&
-                suggestedQuestions.length > 0 && (
-                  <div className="mt-3 flex flex-col items-start gap-2">
-                    {suggestedQuestions.map((question, questionIdx) => (
+                      {isStreamingAssistant && (
+                        <span
+                          className="ml-0.5 inline-block animate-pulse align-baseline"
+                          aria-hidden="true"
+                        >
+                          ▍
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {!hasStartedChat && idx === 0 && (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {QUICK_PROMPTS.map((item) => (
                       <button
-                        key={`${question}-${questionIdx}`}
+                        key={item.label}
                         type="button"
-                        onClick={() => sendMessage(question)}
+                        onClick={() => sendMessage(item.prompt)}
                         disabled={loading}
-                        className="max-w-[78%] rounded-2xl border border-[var(--panel-border)] px-4 py-2.5 text-left text-sm text-[var(--fg)] leading-relaxed whitespace-normal break-words transition hover:brightness-[0.99] disabled:opacity-50"
-                        style={suggestionButtonStyle}
+                        className="rounded-full border border-[var(--panel-border)] bg-[var(--panel)] px-3 py-2 text-xs text-[var(--fg)] hover:bg-black/5 dark:hover:bg-white/10 transition disabled:opacity-50"
                       >
-                        {question}
+                        {item.label}
                       </button>
                     ))}
                   </div>
                 )}
-            </div>
-          ))}
 
-          {loading && (
-            <div className="flex justify-start">
-              <div
-                className="max-w-[78%] rounded-2xl border border-[var(--panel-border)] px-4 py-3 text-sm text-[var(--fg)] leading-relaxed"
-                style={assistantBubbleStyle}
-              >
-                답변을 준비하고 있습니다.
+                {!loading &&
+                  m.role === "assistant" &&
+                  idx === lastAssistantIndex &&
+                  suggestedQuestions.length > 0 && (
+                    <div className="mt-3 flex flex-col items-start gap-2">
+                      {suggestedQuestions.map((question, questionIdx) => (
+                        <button
+                          key={`${question}-${questionIdx}`}
+                          type="button"
+                          onClick={() => sendMessage(question)}
+                          disabled={loading}
+                          className="max-w-[78%] rounded-2xl border border-[var(--panel-border)] px-4 py-2.5 text-left text-sm text-[var(--fg)] leading-relaxed whitespace-normal break-words transition hover:brightness-[0.99] disabled:opacity-50"
+                          style={suggestionButtonStyle}
+                        >
+                          {question}
+                        </button>
+                      ))}
+                    </div>
+                  )}
               </div>
-            </div>
-          )}
+            );
+          })}
 
           <div ref={messagesEndRef} />
         </div>

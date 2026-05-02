@@ -1,5 +1,5 @@
 export const metadata = {
-  title: '자격증',
+  title: 'certs',
 }
 
 export default function CertsPage() {
